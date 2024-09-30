@@ -1,20 +1,30 @@
 import os 
+import time
+
 def parentchild(cwrites): 
    r, w = os.pipe() 
    pid = os.fork() 
+   if pid < 0:
+       print("fork() failed ", pid)
+       os.exit()
+
    if pid: 
       os.close(w) 
-      r = os.fdopen(r) 
+      r = os.fdopen(r, "r") 
       print ("Parent is reading") 
-      str = r.read() 
-      print( "Parent reads =", str) 
+      while True:
+          s = r.readline() 
+          print( "Parent reads =", s) 
    else: 
       os.close(r) 
       w = os.fdopen (w, 'w') 
       print ("Child is writing") 
-      w.write(cwrites) 
-      print("Child writes = ",cwrites) 
+      while True:
+          w.write(cwrites) 
+          w.flush()
+          print("Child writes = ",cwrites) 
+          time.sleep(0.01)
       w.close() 
 # Driver code         
-cwrites = "Python Program"
+cwrites = "Python Program\n"
 parentchild(cwrites) 

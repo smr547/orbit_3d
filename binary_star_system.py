@@ -1,5 +1,5 @@
 # binary_star_system.py
-
+import os
 import time
 from solar_system_3d import SolarSystem, Sun, Planet
 
@@ -29,29 +29,42 @@ planets = (
     ),
 )
 
-spawn_time = time.time()
-frames_since_last_report = 0
-total_sleep_time = 0
-sleeps = 0
 
-while True:
-    frame_start_time = time.time()
+def dump_results():
+    while True:
+        solar_system.read_positions_from_pipe(r)
 
-    solar_system.calculate_all_body_interactions()
-    solar_system.update_all()
-    solar_system.draw_all()
+def display_results():
+    while True:
 
-    loop_time = time.time() - frame_start_time
-    if loop_time < frame_interval:
-        sleep_time = frame_interval - loop_time
-        time.sleep(sleep_time)
-        total_sleep_time += sleep_time
-        sleeps += 1
+        solar_system.read_positions_from_pipe(r)
+        solar_system.draw_all()
+        solar_system.draw_all_bodies()
+        print(solar_system.bodies[0].position)
 
-    frames_since_last_report += 1
-    if frames_since_last_report >= report_rate_frames:
-        idle_percent = total_sleep_time * 100 / (frame_interval * report_rate_frames)
-        print(int(idle_percent), " %idle CPU", end="\r")
-        frames_since_last_report = 0
-        total_sleep_time = 0
-        sleeps = 0
+
+def compute_results():
+    while True:
+        solar_system.calculate_all_body_interactions()
+        solar_system.move_all()
+        solar_system.write_positions_to_pipe(w)
+
+
+# solar system and display properties have been intialised...
+# now we can fork -- child will do the computation and parent will do the display
+
+
+r, w = os.pipe() 
+pid = os.fork() 
+if pid:  # parent does the displaying 
+   os.close(w) 
+   r = os.fdopen(r) 
+   print ("Parent is displaying results ") 
+   display_results()
+   #dump_results()
+
+else:  # child does the computation 
+   os.close(r) 
+   w = os.fdopen (w, 'w') 
+   print ("Child is computing results for ", len(solar_system.bodies), " bodies") 
+   compute_results()

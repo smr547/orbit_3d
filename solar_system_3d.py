@@ -25,13 +25,35 @@ class SolarSystem:
         self.fig.tight_layout()
 
     def add_body(self, body):
+        body.no = len(self.bodies)
         self.bodies.append(body)
 
-    def update_all(self):
-        self.bodies.sort(key=lambda item: item.position[0])
+
+    def move_all(self):
         for body in self.bodies:
             body.move()
+
+    def draw_all_bodies(self):
+        self.bodies.sort(key=lambda item: item.position[0])
+        for body in self.bodies:
+            #body.move()
             body.draw()
+        self.bodies.sort(key=lambda item: item.no)
+
+    def read_positions_from_pipe(self, aPipe):
+        while True:
+            rec = aPipe.readline().strip()
+            if len(rec) == 0:
+                return
+            fields = rec.split(',')
+            bodyNo = int(fields[0])
+            self.bodies[bodyNo].position = (float(fields[1]), float(fields[2]), float(fields[3]))
+
+    def write_positions_to_pipe(self, aPipe):
+        for body in self.bodies:
+            body.write_position_to_pipe(aPipe)
+        aPipe.write("\n")  # blank line indicates end of this frame of data
+        aPipe.flush()
 
     def draw_all(self):
         self.ax.set_xlim((-self.size / 2, self.size / 2))
@@ -63,6 +85,7 @@ class SolarSystemBody:
         position=(0, 0, 0),
         velocity=(0, 0, 0),
     ):
+        self.no = 0
         self.solar_system = solar_system
         self.mass = mass
         self.position = position
@@ -82,6 +105,10 @@ class SolarSystemBody:
             self.position[2] + self.velocity[2],
         )
 
+    def write_position_to_pipe(self, aPipe):
+        rec = '{n:d},{x:f},{y:f},{z:f}\n'.format(n=self.no, x=self.position[0], y=self.position[1], z=self.position[2])
+        aPipe.write(rec)
+
     def draw(self):
         self.solar_system.ax.plot(
             *self.position,
@@ -100,6 +127,7 @@ class SolarSystemBody:
             )
 
     def accelerate_due_to_gravity(self, other):
+        # print("computing for ",self," and ", other)
         distance = Vector(*other.position) - Vector(*self.position)
         distance_mag = distance.get_magnitude()
 
