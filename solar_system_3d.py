@@ -1,5 +1,7 @@
 # solar_system_3d.py
 
+import os
+import time
 import itertools
 import math
 import matplotlib.pyplot as plt
@@ -7,9 +9,10 @@ import matplotlib.pyplot as plt
 from vectors import Vector
 
 class SolarSystem:
-    def __init__(self, size, projection_2d=False):
+    def __init__(self, size, projection_2d=False, frame_rate=15):
         self.size = size
         self.projection_2d = projection_2d
+        self.frame_rate = frame_rate
         self.bodies = []
 
         self.fig, self.ax = plt.subplots(
@@ -27,7 +30,6 @@ class SolarSystem:
     def add_body(self, body):
         body.no = len(self.bodies)
         self.bodies.append(body)
-
 
     def move_all(self):
         for body in self.bodies:
@@ -74,6 +76,47 @@ class SolarSystem:
             for second in bodies_copy[idx + 1:]:
                 first.accelerate_due_to_gravity(second)
 
+    def display_results(self, r):
+        while True:
+
+            start_time = time.time()  # 
+            self.read_positions_from_pipe(r)
+            self.draw_all()
+            self.draw_all_bodies()
+        
+            # throttle this loop to the frame rate
+            display_time = time.time() - start_time 
+            sleep_time = (1 / self.frame_rate) - display_time 
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            else:
+                actual_frame_rate = self.frame_rate
+                if sleep_time != 0:
+                    actual_frame_rate = 1/display_time
+                print("WARNING: frame rate ", int(actual_frame_rate), " try for ", self.frame_rate)
+
+    def compute_results(self, w):
+        while True:
+            self.calculate_all_body_interactions()
+            self.move_all()
+            self.write_positions_to_pipe(w)
+
+    def run(self):
+        r, w = os.pipe() 
+        pid = os.fork() 
+        if pid:  # parent does the displaying 
+            os.close(w) 
+            r = os.fdopen(r) 
+            print ("Parent is displaying results pid ", os.getpid()) 
+            print ("Child is computing results for ", len(self.bodies), " bodies. pid: ", pid) 
+            self.display_results(r)
+            #dump_results()
+
+        else:  # child does the computation 
+            os.close(r) 
+            w = os.fdopen (w, 'w') 
+            self.compute_results(w)
+
 class SolarSystemBody:
     min_display_size = 10
     display_log_base = 1.3
@@ -83,8 +126,8 @@ class SolarSystemBody:
         solar_system,
         mass,
         position=(0, 0, 0),
-        velocity=(0, 0, 0),
-    ):
+        velocity=(0, 0, 0)):
+
         self.no = 0
         self.solar_system = solar_system
         self.mass = mass
