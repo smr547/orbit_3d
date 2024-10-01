@@ -43,13 +43,23 @@ class SolarSystem:
         self.bodies.sort(key=lambda item: item.no)
 
     def read_positions_from_pipe(self, aPipe):
+        active_bodies = set() 
         while True:
             rec = aPipe.readline().strip()
             if len(rec) == 0:
-                return
+                break
             fields = rec.split(',')
             bodyNo = int(fields[0])
+            active_bodies.add(bodyNo)
             self.bodies[bodyNo].position = (float(fields[1]), float(fields[2]), float(fields[3]))
+
+        # check if any bodies have been deleted by the computation engine and remove from display
+
+        if (len(active_bodies) == len(self.bodies)):
+            return  # nothing has been delete by the computation engine
+        for i in range(len(self.bodies)-1, 0, -1):
+            if self.bodies[i].no not in active_bodies:
+                self.bodies.pop(i)
 
     def write_positions_to_pipe(self, aPipe):
         for body in self.bodies:

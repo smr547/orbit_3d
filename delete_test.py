@@ -9,14 +9,8 @@ sun = Sun(solar_system)
 planets = (
     Planet(
         solar_system,
-        position=(150, 50, 0),
-        velocity=(0, 5, 5),
-    ),
-    Planet(
-        solar_system,
-        mass=20,
-        position=(100, -50, 150),
-        velocity=(5, 0, 0)
+        position=(350, 0, 0),
+        velocity=(-1, 0, 0),
     ),
 )
 
