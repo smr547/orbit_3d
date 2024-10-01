@@ -2,7 +2,7 @@
 
 from solar_system_3d import SolarSystem, Sun, Planet
 
-solar_system = SolarSystem(400, projection_2d=False)
+solar_system = SolarSystem(400, projection_2d=True)
 
 sun = Sun(solar_system)
 
@@ -20,7 +20,4 @@ planets = (
     )
 )
 
-while True:
-    solar_system.calculate_all_body_interactions()
-    solar_system.update_all()
-    solar_system.draw_all()
+solar_system.run()

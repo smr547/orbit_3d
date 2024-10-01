@@ -21,7 +21,13 @@ planets = (
         solar_system,
         20,
         position=(0, 0, 0),
-        velocity=(-11, 11, 0),
+        velocity=(-1, 11, 0),
+    ),
+    Planet(
+        solar_system,
+        25,
+        position=(15, 0, 0),
+        velocity=(-12, 11, 0),
     ),
 )
 
